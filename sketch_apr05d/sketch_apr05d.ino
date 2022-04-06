@@ -2,20 +2,47 @@
 //B31DG Assignment 3
 //Ethan Thomas Hunking H00272332
 
+//Project Pins
 #define timer_pin 32    //Pin allocation for timer output
-
 #define t1_pin 21       //Pin allocation for Task 1
-
 #define t2_pin 22       //Pin allocation for Task 2
+#define t3_pin 13       //Pin allocation for Task 3
+#define t4_pin 14       //Pin allocation for Task 4
+#define t8_pin 15       //Pin allocation for Task 8
+
+//Frequency of Tasks
+#define t1_freq 30.67
+#define t2_freq 5
+#define t3_freq 1
+#define t4_freq 24
+#define t5_freq 24
+#define t6_freq 10
+#define t7_freq 3
+#define t8_freq 3
+#define t9_freq 0.2
+
+//Time Period Calculator
+#define Tperiod 1000    //Converts s to ms within period calc
+
+//Period of Task in ms
+double t1_period = Tperiod/t1_freq;
+double t2_period = Tperiod/t2_freq;
+double t3_period = Tperiod/t3_freq;
+double t4_period = Tperiod/t4_freq;
+double t5_period = Tperiod/t5_freq;
+double t6_period = Tperiod/t6_freq;
+double t7_period = Tperiod/t7_freq;
+double t8_period = Tperiod/t8_freq;
+double t9_period = Tperiod/t9_freq;
+
+
 int t2_state = 0;       //Button State for Task 2
 int t2_debounce = 0;    //Button debounce
 
-#define t3_pin 13       //Pin allocation for Task 3
 float t3_duration1low;  //float counter for time of low
 float t3_durationperiod;//float for period of waveform
 int t3_frequency;       //integer wavegen frequency
 
-#define t4_pin 14       //Pin allocation for Task 4
 int t4_state = 0;       //integer for analogue value read
 
 int t5_sto1 = 0;        //Task 5 Pre-Calc. Avg Storage 1
@@ -26,7 +53,7 @@ int t5_avg = 0;         //Task 5 Calculated Average
 
 int error_code = 0;     //Task 7 Error Code
 
-#define t8_pin 15       //Pin allocation for Task 8
+
 
 struct task9_Data{
   int t2_switchstate;
@@ -43,7 +70,7 @@ static SemaphoreHandle_t mutex;
 //Task1 watchdog 30Hz 
 void task1(void *parameter){
   while(1){
-    vTaskDelay(33 / portTICK_PERIOD_MS);
+    vTaskDelay(t1_period / portTICK_PERIOD_MS);
     digitalWrite(t1_pin, HIGH);  //Sets Output High
     vTaskDelay(0.05 / portTICK_PERIOD_MS); //Delays signal by 50us   
     digitalWrite(t1_pin, LOW);//Sets Output Low again
@@ -54,7 +81,7 @@ void task1(void *parameter){
 //Task2 High/Low In 5Hz
 void task2(void *parameter){ 
   while(1){ 
-    vTaskDelay(200 / portTICK_PERIOD_MS);
+    vTaskDelay(t2_period / portTICK_PERIOD_MS);
     t2_debounce = t2_state;         //Saves previous status              
     t2_state = digitalRead(t2_pin); //Reads state of button
     vTaskDelay(0.25 / portTICK_PERIOD_MS); //Delays signal by 250us       
@@ -76,7 +103,7 @@ void task2(void *parameter){
 //Task3 Freq In 1Hz
 void task3(void *parameter){  
   while(1){
-     vTaskDelay(1000 / portTICK_PERIOD_MS);
+     vTaskDelay(t3_period / portTICK_PERIOD_MS);
      t3_duration1low = pulseIn(t3_pin, LOW);
      t3_durationperiod = t3_duration1low *2;
      t3_frequency = (1 / (t3_durationperiod/1000))*1000; 
@@ -90,7 +117,7 @@ void task3(void *parameter){
 //Task4 Poteniotmeter 24Hz (des.) 25Hz (expt.)
 void task4(void *parameter){
   while(1){
-    vTaskDelay(42 / portTICK_PERIOD_MS);
+    vTaskDelay(t4_period / portTICK_PERIOD_MS);
     //digitalWrite(timer_pin, HIGH);   //High to measure time   
     t4_state = analogRead(t4_pin);//Reads analog input  
     //digitalWrite(timer_pin, LOW);    //Low to end measure time  
@@ -101,7 +128,7 @@ void task4(void *parameter){
 //Task5 Avg 4 Pot. 24Hz (des.) 25Hz (expt.)
 void task5(void *parameter){ 
   while(1){
-    vTaskDelay(42 / portTICK_PERIOD_MS); 
+    vTaskDelay(t5_period / portTICK_PERIOD_MS); 
     t5_sto4 = t5_sto3;         //Shifts values by one position
     t5_sto3 = t5_sto2;         //Shifts values by one position         
     t5_sto2 = t5_sto1;         //Shifts values by one position 
@@ -121,7 +148,7 @@ void task5(void *parameter){
 //Task6 Volatile 10Hz
 void task6(void *parameter){
   while(1){
-    vTaskDelay(100 / portTICK_PERIOD_MS); 
+    vTaskDelay(t6_period / portTICK_PERIOD_MS); 
     //for loop as defined in lab sheet
     for(int C_Loop = 1; C_Loop == 1000; C_Loop++){  
       __asm__ __volatile__("nop");
@@ -132,7 +159,7 @@ void task6(void *parameter){
 //Task7 checker 3Hz
 void task7(void *parameter){
   while(1){
-    vTaskDelay(333 / portTICK_PERIOD_MS); 
+    vTaskDelay(t7_period / portTICK_PERIOD_MS); 
     //if statment as defined in lab sheet
     if(t5_avg > (4096/2)){
       error_code = 1; 
@@ -147,7 +174,7 @@ void task7(void *parameter){
 //Task8 LED 3Hz
 void task8(void *parameter){
   while(1){
-    vTaskDelay(333 / portTICK_PERIOD_MS); 
+    vTaskDelay(t8_period / portTICK_PERIOD_MS); 
     //Reads error code and sets LED high/low if error_code 1/0
     if(error_code == 1){
       digitalWrite(t8_pin, HIGH);
@@ -161,7 +188,7 @@ void task8(void *parameter){
 //Task9 Print Resuts
 void task9(void *parameter){
   while(1){
-    vTaskDelay(5000 / portTICK_PERIOD_MS); 
+    vTaskDelay(t9_period / portTICK_PERIOD_MS); 
    if(t2_state == 1){
       xSemaphoreTake(mutex, portMAX_DELAY);
       //Prints in serial a csv as defined in lab sheet
