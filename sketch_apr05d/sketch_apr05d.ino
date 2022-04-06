@@ -36,6 +36,9 @@ struct task9_Data{
 
 task9_Data t9_Data;
 
+static SemaphoreHandle_t mutex;
+
+//********************************************************************************************************************************
 //Functions for each task
 //Task1 watchdog 30Hz 
 void task1(void *parameter){
@@ -62,9 +65,10 @@ void task2(void *parameter){
         t2_state = 0;
       }
     } 
-     //Serial.println(t2_state); 
-
+ 
+     xSemaphoreTake(mutex, portMAX_DELAY);
      t9_Data.t2_switchstate = t2_state;
+     xSemaphoreGive(mutex);
   }
 }
 
@@ -77,7 +81,9 @@ void task3(void *parameter){
      t3_durationperiod = t3_duration1low *2;
      t3_frequency = (1 / (t3_durationperiod/1000))*1000; 
 
-     t9_Data.t3_frequency = t3_frequency;      
+     xSemaphoreTake(mutex, portMAX_DELAY);
+     t9_Data.t3_frequency = t3_frequency; 
+     xSemaphoreGive(mutex);    
   }            
 }
 
@@ -105,7 +111,9 @@ void task5(void *parameter){
     t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
    // Serial.println(t5_avg);
 
+   xSemaphoreTake(mutex, portMAX_DELAY);
    t9_Data.t5_potavg = t5_avg;
+   xSemaphoreGive(mutex);
   }                     
 }
 
@@ -154,15 +162,20 @@ void task8(void *parameter){
 void task9(void *parameter){
   while(1){
     vTaskDelay(5000 / portTICK_PERIOD_MS); 
-    if(t2_state == 1){
+   if(t2_state == 1){
+      xSemaphoreTake(mutex, portMAX_DELAY);
       //Prints in serial a csv as defined in lab sheet
       Serial.printf("%d, %d, %d \n",  t9_Data.t2_switchstate, t9_Data.t3_frequency, t9_Data.t5_potavg);
+      xSemaphoreGive(mutex);
     }
+    
     else{
     }
   }
 }
 
+
+//************************************************************************************************************************
 void setup() {
 
   // Configure pin
@@ -175,6 +188,9 @@ void setup() {
   
   //Creates Serial Port
   Serial.begin(115200);
+
+  //Create mutex
+  mutex = xSemaphoreCreateMutex();
 
   //These tasks are set to run forever
   xTaskCreate(  
@@ -247,7 +263,10 @@ void setup() {
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
-              );                          
+              );  
+
+  // Delete "setup and loop" task
+  vTaskDelete(NULL);
 }
 
 void loop() {
