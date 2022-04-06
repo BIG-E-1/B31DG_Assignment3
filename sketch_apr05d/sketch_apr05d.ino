@@ -1,12 +1,3 @@
-/**
- * Solution to 02 - Blinky Challenge
- * 
- * Toggles LED at different rates using separate tasks.
- * 
- * Date: December 3, 2020
- * Author: Shawn Hymel
- * License: 0BSD
- */
 
 // Use only core 1 for demo purposes
 #if CONFIG_FREERTOS_UNICORE
@@ -16,60 +7,226 @@ static const BaseType_t app_cpu = 1;
 #endif
 
 // LED rates
-static const int rate_1 = 5000;  // ms
-static const int rate_2 = 1000;  // ms
+static const int rate_3 = 1000;  // ms
+static const int rate_4 = 4000;  // ms
 
-// Pins
-static const int led_pin = LED_BUILTIN;
-#define led_pin 32
-#define led_pin2 33
+#define timer_pin 32    //Pin allocation for timer output
 
-// Our task: blink an LED at one rate
-void toggleLED_1(void *parameter) {
-  while(1) {
-    digitalWrite(led_pin, HIGH);
-    vTaskDelay(rate_1 / portTICK_PERIOD_MS);
-    digitalWrite(led_pin, LOW);
-    vTaskDelay(rate_1 / portTICK_PERIOD_MS);
+#define t1_pin 21       //Pin allocation for Task 1
+
+#define t2_pin 22       //Pin allocation for Task 2
+int t2_state = 0;       //Button State for Task 2
+int t2_debounce = 0;    //Button debounce
+
+#define t3_pin 13       //Pin allocation for Task 3
+float t3_duration1low;  //float counter for time of low
+float t3_durationperiod;//float for period of waveform
+int t3_frequency;       //integer wavegen frequency
+
+#define t4_pin 14       //Pin allocation for Task 4
+int t4_state = 0;       //integer for analogue value read
+
+int t5_sto1 = 0;        //Task 5 Pre-Calc. Avg Storage 1
+int t5_sto2 = 0;        //Task 5 Pre-Calc. Avg Storage 2
+int t5_sto3 = 0;        //Task 5 Pre-Calc. Avg Storage 3
+int t5_sto4 = 0;        //Task 5 Pre-Calc. Avg Storage 4
+int t5_avg = 0;         //Task 5 Calculated Average
+
+int error_code = 0;     //Task 7 Error Code
+
+#define t8_pin 15       //Pin allocation for Task 8
+
+
+
+//Functions for each task
+//Task1 watchdog 30Hz 
+void task1(void *parameter){
+  while(1){
+    vTaskDelay(rate_4 / portTICK_PERIOD_MS);
+    digitalWrite(t1_pin, HIGH);  //Sets Output High
+    vTaskDelay(0.05 / portTICK_PERIOD_MS); //Delays signal by 50us   
+    digitalWrite(t1_pin, LOW);//Sets Output Low again
   }
 }
 
-// Our task: blink an LED at another rate
-void toggleLED_2(void *parameter) {
-  while(1) {
-    digitalWrite(led_pin2, HIGH);
-    vTaskDelay(rate_2 / portTICK_PERIOD_MS);
-    digitalWrite(led_pin2, LOW);
-    vTaskDelay(rate_2 / portTICK_PERIOD_MS);
+
+//Task2 High/Low In 5Hz
+void task2(void *parameter){ 
+  while(1){ 
+    vTaskDelay(rate_3 / portTICK_PERIOD_MS);
+    t2_debounce = t2_state;         //Saves previous status              
+    t2_state = digitalRead(t2_pin); //Reads state of button
+    vTaskDelay(0.25 / portTICK_PERIOD_MS); //Delays signal by 250us       
+  
+    //Checking for button bouncing
+    if(t2_state != digitalRead(t2_pin)){
+      if(t2_state != t2_debounce){
+        t2_state = 0;
+      }
+    } 
+     Serial.println(t2_state); 
+  }
+}
+
+
+//Task3 Freq In 1Hz
+void task3(void *parameter){  
+  while(1){
+     vTaskDelay(rate_3 / portTICK_PERIOD_MS);
+     t3_duration1low = pulseIn(t3_pin, LOW);
+     t3_durationperiod = t3_duration1low *2;
+     t3_frequency = (1 / (t3_durationperiod/1000))*1000;       
+  }            
+}
+
+//Task4 Poteniotmeter 24Hz (des.) 25Hz (expt.)
+void task4(void *parameter){
+  while(1){
+    vTaskDelay(rate_3 / portTICK_PERIOD_MS);
+    //digitalWrite(timer_pin, HIGH);   //High to measure time   
+    t4_state = analogRead(t4_pin);//Reads analog input  
+    //Serial.println(t4_state);
+    //digitalWrite(timer_pin, LOW);    //Low to end measure time  
+  }          
+}
+
+
+//Task5 Avg 4 Pot. 24Hz (des.) 25Hz (expt.)
+void task5(void *parameter){ 
+  while(1){
+    vTaskDelay(rate_4 / portTICK_PERIOD_MS); 
+    t5_sto4 = t5_sto3;         //Shifts values by one position
+    t5_sto3 = t5_sto2;         //Shifts values by one position         
+    t5_sto2 = t5_sto1;         //Shifts values by one position 
+    t5_sto1 = t4_state;        //Shifts values by one position
+  
+    //Uses 4 values to calculate average
+    t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
+    //Serial.println("5");
+    Serial.println(t5_avg);
+  }                     
+}
+
+
+//Task6 Volatile 10Hz
+void task6(void *parameter){
+  while(1){
+    vTaskDelay(rate_4 / portTICK_PERIOD_MS); 
+    //for loop as defined in lab sheet
+    for(int C_Loop = 1; C_Loop == 1000; C_Loop++){  
+      __asm__ __volatile__("nop");
+    }
+  }
+}
+
+//Task7 checker 3Hz
+void task7(void *parameter){
+  while(1){
+    vTaskDelay(rate_4 / portTICK_PERIOD_MS); 
+    //if statment as defined in lab sheet
+    if(t5_avg > (4096/2)){
+      error_code = 1; 
+    }
+    else{
+      error_code = 0;
+    }
+  }
+}
+
+
+//Task8 LED 3Hz
+void task8(void *parameter){
+  while(1){
+    vTaskDelay(rate_4 / portTICK_PERIOD_MS); 
+    //Reads error code and sets LED high/low if error_code 1/0
+    if(error_code == 1){
+      digitalWrite(t8_pin, HIGH);
+    }
+    else{
+      digitalWrite(t8_pin, LOW);
+      }
   }
 }
 
 void setup() {
 
   // Configure pin
-  pinMode(led_pin, OUTPUT);
-  pinMode(led_pin2, OUTPUT);
+  pinMode(t1_pin, OUTPUT);   //Task 1 Watchdog 
+  pinMode(t2_pin, INPUT);    //Task 2 Button dig. read
+  pinMode(t3_pin, INPUT);    //Task 3 Square wave in.
+  pinMode(t4_pin, INPUT);    //Task 4 Analogue input
+  pinMode(t8_pin, OUTPUT);   //Task 8 Error LED output
+  pinMode(timer_pin, OUTPUT);//Output for time testing
+  
+  //Creates Serial Port
+  Serial.begin(115200);
 
   // Task to run forever
+
   xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
-              toggleLED_1,  // Function to be called
-              "Toggle 1",   // Name of task
+              task1,  // Function to be called
+              "task1",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)  
 
-  // Task to run forever
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
-              toggleLED_2,  // Function to be called
-              "Toggle 2",   // Name of task
+   xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+              task2,  // Function to be called
+              "task2",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)               
+                
+  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+              task4,  // Function to be called
+              "task4",   // Name of task
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL,         // Task handle
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)   
+          
+  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+              task5,  // Function to be called
+              "task5",   // Name of task
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL,         // Task handle
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)   
 
+  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+              task6,  // Function to be called
+              "task6",   // Name of task
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL,         // Task handle
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)   
+          
+  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+              task7,  // Function to be called
+              "task7",   // Name of task
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL,         // Task handle
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)  
+
+  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+              task8,  // Function to be called
+              "task8",   // Name of task
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL,         // Task handle
+              app_cpu);     // Run on one core for demo purposes (ESP32 only)                
+
+                        
   // If this was vanilla FreeRTOS, you'd want to call vTaskStartScheduler() in
   // main after setting up your tasks.
 }
