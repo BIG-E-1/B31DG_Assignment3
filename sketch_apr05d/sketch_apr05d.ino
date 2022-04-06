@@ -142,13 +142,17 @@ void task8(void *parameter){
 void task9(void *parameter){
   while(1){
     vTaskDelay(5000 / portTICK_PERIOD_MS); 
-    //Prints in serial a csv as defined in lab sheet
-    Serial.println("");
-    Serial.print(t2_state); //Prints task 2
-    Serial.print(" , ");
-    Serial.print(t3_frequency); //Prints task 3
-    Serial.print(" , ");
-    Serial.print(t5_avg); //Prints task 5
+    if(t2_state == 1){
+      //Prints in serial a csv as defined in lab sheet
+      Serial.println("");
+      Serial.print(t2_state); //Prints task 2
+      Serial.print(" , ");
+      Serial.print(t3_frequency); //Prints task 3
+      Serial.print(" , ");
+      Serial.print(t5_avg); //Prints task 5
+    }
+    else{
+    }
   }
 }
 
