@@ -146,7 +146,7 @@ void setup() {
 
   // Configure pin
   pinMode(t1_pin, OUTPUT);   //Task 1 Watchdog 
-  pinMode(t2_pin, INPUT);    //Task 2 Button dig. read
+  pinMode(t2_pin, INPUT_PULLDOWN);    //Task 2 Button dig. read
   pinMode(t3_pin, INPUT);    //Task 3 Square wave in.
   pinMode(t4_pin, INPUT);    //Task 4 Analogue input
   pinMode(t8_pin, OUTPUT);   //Task 8 Error LED output
