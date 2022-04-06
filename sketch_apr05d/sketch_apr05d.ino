@@ -56,7 +56,7 @@ void task2(void *parameter){
         t2_state = 0;
       }
     } 
-     Serial.println(t2_state); 
+     //Serial.println(t2_state); 
   }
 }
 
@@ -93,8 +93,7 @@ void task5(void *parameter){
   
     //Uses 4 values to calculate average
     t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
-    //Serial.println("5");
-    Serial.println(t5_avg);
+   // Serial.println(t5_avg);
   }                     
 }
 
@@ -136,6 +135,20 @@ void task8(void *parameter){
     else{
       digitalWrite(t8_pin, LOW);
       }
+  }
+}
+
+//Task9 Print Resuts
+void task9(void *parameter){
+  while(1){
+    vTaskDelay(5000 / portTICK_PERIOD_MS); 
+    //Prints in serial a csv as defined in lab sheet
+    Serial.println("");
+    Serial.print(t2_state); //Prints task 2
+    Serial.print(" , ");
+    Serial.print(t3_frequency); //Prints task 3
+    Serial.print(" , ");
+    Serial.print(t5_avg); //Prints task 5
   }
 }
 
@@ -216,7 +229,14 @@ void setup() {
               NULL         // Task handle
               );                   
 
-                        
+  xTaskCreate( 
+              task9,  // Function to be called
+              "task9",   // Name of task
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL         // Task handle
+              );                          
 }
 
 void loop() {
