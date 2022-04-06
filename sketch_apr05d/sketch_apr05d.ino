@@ -1,6 +1,6 @@
 
 
-// LED rates
+//Temp Rates 
 static const int rate_3 = 1000;  // ms
 static const int rate_4 = 4000;  // ms
 
@@ -155,27 +155,26 @@ void setup() {
   //Creates Serial Port
   Serial.begin(115200);
 
-  // Task to run forever
-
-  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+  //These tasks are set to run forever
+  xTaskCreate(  
               task1,  // Function to be called
               "task1",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
-              );     // Run on one core for demo purposes (ESP32 only)  
+              );     
 
-   xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+   xTaskCreate( 
               task2,  // Function to be called
               "task2",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
-              );     // Run on one core for demo purposes (ESP32 only)               
+              );                
                 
-  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  
               task4,  // Function to be called
               "task4",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
@@ -184,7 +183,7 @@ void setup() {
               NULL         // Task handle
               );     // Run on one core for demo purposes (ESP32 only)   
           
-  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  
               task5,  // Function to be called
               "task5",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
@@ -193,7 +192,7 @@ void setup() {
               NULL         // Task handle
               );     // Run on one core for demo purposes (ESP32 only)   
 
-  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  
               task6,  // Function to be called
               "task6",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
@@ -202,7 +201,7 @@ void setup() {
               NULL         // Task handle
               );     // Run on one core for demo purposes (ESP32 only)   
           
-  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  
               task7,  // Function to be called
               "task7",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
@@ -211,7 +210,7 @@ void setup() {
               NULL         // Task handle
               );     // Run on one core for demo purposes (ESP32 only)  
 
-  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate( 
               task8,  // Function to be called
               "task8",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
@@ -221,12 +220,8 @@ void setup() {
               );                   
 
                         
-  // If this was vanilla FreeRTOS, you'd want to call vTaskStartScheduler() in
-  // main after setting up your tasks.
 }
 
 void loop() {
-  // Do nothing
-  // setup() and loop() run in their own task with priority 1 in core 1
-  // on ESP32
+  // No Tasks within this loop
 }
