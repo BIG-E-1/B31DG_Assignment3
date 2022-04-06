@@ -28,7 +28,13 @@ int error_code = 0;     //Task 7 Error Code
 
 #define t8_pin 15       //Pin allocation for Task 8
 
+struct task9_Data{
+  int t2_switchstate;
+  int t3_frequency;
+  int t5_potavg;
+};
 
+task9_Data t9_Data;
 
 //Functions for each task
 //Task1 watchdog 30Hz 
@@ -57,6 +63,8 @@ void task2(void *parameter){
       }
     } 
      //Serial.println(t2_state); 
+
+     t9_Data.t2_switchstate = t2_state;
   }
 }
 
@@ -67,7 +75,9 @@ void task3(void *parameter){
      vTaskDelay(1000 / portTICK_PERIOD_MS);
      t3_duration1low = pulseIn(t3_pin, LOW);
      t3_durationperiod = t3_duration1low *2;
-     t3_frequency = (1 / (t3_durationperiod/1000))*1000;       
+     t3_frequency = (1 / (t3_durationperiod/1000))*1000; 
+
+     t9_Data.t3_frequency = t3_frequency;      
   }            
 }
 
@@ -94,6 +104,8 @@ void task5(void *parameter){
     //Uses 4 values to calculate average
     t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
    // Serial.println(t5_avg);
+
+   t9_Data.t5_potavg = t5_avg;
   }                     
 }
 
@@ -144,12 +156,7 @@ void task9(void *parameter){
     vTaskDelay(5000 / portTICK_PERIOD_MS); 
     if(t2_state == 1){
       //Prints in serial a csv as defined in lab sheet
-      Serial.println("");
-      Serial.print(t2_state); //Prints task 2
-      Serial.print(" , ");
-      Serial.print(t3_frequency); //Prints task 3
-      Serial.print(" , ");
-      Serial.print(t5_avg); //Prints task 5
+      Serial.printf("%d, %d, %d \n",  t9_Data.t2_switchstate, t9_Data.t3_frequency, t9_Data.t5_potavg);
     }
     else{
     }
