@@ -1,10 +1,4 @@
 
-// Use only core 1 for demo purposes
-#if CONFIG_FREERTOS_UNICORE
-static const BaseType_t app_cpu = 0;
-#else
-static const BaseType_t app_cpu = 1;
-#endif
 
 // LED rates
 static const int rate_3 = 1000;  // ms
@@ -163,68 +157,68 @@ void setup() {
 
   // Task to run forever
 
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task1,  // Function to be called
               "task1",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)  
+              NULL         // Task handle
+              );     // Run on one core for demo purposes (ESP32 only)  
 
-   xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+   xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task2,  // Function to be called
               "task2",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)               
+              NULL         // Task handle
+              );     // Run on one core for demo purposes (ESP32 only)               
                 
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task4,  // Function to be called
               "task4",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)   
+              NULL         // Task handle
+              );     // Run on one core for demo purposes (ESP32 only)   
           
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task5,  // Function to be called
               "task5",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)   
+              NULL         // Task handle
+              );     // Run on one core for demo purposes (ESP32 only)   
 
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task6,  // Function to be called
               "task6",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)   
+              NULL         // Task handle
+              );     // Run on one core for demo purposes (ESP32 only)   
           
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task7,  // Function to be called
               "task7",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)  
+              NULL         // Task handle
+              );     // Run on one core for demo purposes (ESP32 only)  
 
-  xTaskCreatePinnedToCore(  // Use xTaskCreate() in vanilla FreeRTOS
+  xTaskCreate(  // Use xTaskCreate() in vanilla FreeRTOS
               task8,  // Function to be called
               "task8",   // Name of task
               1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL,         // Task handle
-              app_cpu);     // Run on one core for demo purposes (ESP32 only)                
+              NULL         // Task handle
+              );                   
 
                         
   // If this was vanilla FreeRTOS, you'd want to call vTaskStartScheduler() in
