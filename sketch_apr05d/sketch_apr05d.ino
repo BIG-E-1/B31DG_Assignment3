@@ -35,35 +35,24 @@ double t7_period = Tperiod/t7_freq;
 double t8_period = Tperiod/t8_freq;
 double t9_period = Tperiod/t9_freq;
 
-
-int t2_state = 0;       //Button State for Task 2
-int t2_debounce = 0;    //Button debounce
-
-float t3_duration1low;  //float counter for time of low
-float t3_durationperiod;//float for period of waveform
-int t3_frequency;       //integer wavegen frequency
-
-int t4_state = 0;       //integer for analogue value read
-
-int t5_sto1 = 0;        //Task 5 Pre-Calc. Avg Storage 1
-int t5_sto2 = 0;        //Task 5 Pre-Calc. Avg Storage 2
-int t5_sto3 = 0;        //Task 5 Pre-Calc. Avg Storage 3
-int t5_sto4 = 0;        //Task 5 Pre-Calc. Avg Storage 4
-int t5_avg = 0;         //Task 5 Calculated Average
-
-int error_code = 0;     //Task 7 Error Code
-
-
-
+//Creating structure for task 9 information 
 struct task9_Data{
   int t2_switchstate;
   int t3_frequency;
   int t5_potavg;
 };
 
+//Structure being intiated  
 task9_Data t9_Data;
 
+//Delcleation of semaphore called mutex.
 static SemaphoreHandle_t mutex;
+
+
+//tbm
+ int t4_state = 0;       //integer for analogue value read
+ int t5_avg = 0;         //Task 5 Calculated Average
+ int error_code = 0;     //Task 7 Error Code
 
 //********************************************************************************************************************************
 //Functions for each task
@@ -80,6 +69,10 @@ void task1(void *parameter){
 
 //Task2 High/Low In 5Hz
 void task2(void *parameter){ 
+
+  int t2_state = 0;       //Button State for Task 2
+  int t2_debounce = 0;    //Button debounce
+  
   while(1){ 
     vTaskDelay(t2_period / portTICK_PERIOD_MS);
     t2_debounce = t2_state;         //Saves previous status              
@@ -101,7 +94,12 @@ void task2(void *parameter){
 
 
 //Task3 Freq In 1Hz
-void task3(void *parameter){  
+void task3(void *parameter){
+  
+  float t3_duration1low;  //float counter for time of low
+  float t3_durationperiod;//float for period of waveform
+  int t3_frequency;       //integer wavegen frequency
+    
   while(1){
      vTaskDelay(t3_period / portTICK_PERIOD_MS);
      t3_duration1low = pulseIn(t3_pin, LOW);
@@ -116,6 +114,9 @@ void task3(void *parameter){
 
 //Task4 Poteniotmeter 24Hz (des.) 25Hz (expt.)
 void task4(void *parameter){
+
+ 
+  
   while(1){
     vTaskDelay(t4_period / portTICK_PERIOD_MS);
     //digitalWrite(timer_pin, HIGH);   //High to measure time   
@@ -127,6 +128,13 @@ void task4(void *parameter){
 
 //Task5 Avg 4 Pot. 24Hz (des.) 25Hz (expt.)
 void task5(void *parameter){ 
+
+  int t5_sto1 = 0;        //Task 5 Pre-Calc. Avg Storage 1
+  int t5_sto2 = 0;        //Task 5 Pre-Calc. Avg Storage 2
+  int t5_sto3 = 0;        //Task 5 Pre-Calc. Avg Storage 3
+  int t5_sto4 = 0;        //Task 5 Pre-Calc. Avg Storage 4
+  
+  
   while(1){
     vTaskDelay(t5_period / portTICK_PERIOD_MS); 
     t5_sto4 = t5_sto3;         //Shifts values by one position
@@ -158,6 +166,9 @@ void task6(void *parameter){
 
 //Task7 checker 3Hz
 void task7(void *parameter){
+
+
+  
   while(1){
     vTaskDelay(t7_period / portTICK_PERIOD_MS); 
     //if statment as defined in lab sheet
@@ -189,7 +200,7 @@ void task8(void *parameter){
 void task9(void *parameter){
   while(1){
     vTaskDelay(t9_period / portTICK_PERIOD_MS); 
-   if(t2_state == 1){
+   if(t9_Data.t2_switchstate){
       xSemaphoreTake(mutex, portMAX_DELAY);
       //Prints in serial a csv as defined in lab sheet
       Serial.printf("%d, %d, %d \n",  t9_Data.t2_switchstate, t9_Data.t3_frequency, t9_Data.t5_potavg);
