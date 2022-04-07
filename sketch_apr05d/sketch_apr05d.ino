@@ -12,14 +12,14 @@
 
 //Frequency of Tasks
 #define t1_freq 30.67
-#define t2_freq 5
+#define t2_freq 24
 #define t3_freq 1
 #define t4_freq 24
 #define t5_freq 24
 #define t6_freq 10
 #define t7_freq 3
 #define t8_freq 3
-#define t9_freq 0.2
+#define t9_freq 1 //0.2
 
 //Time Period Calculator
 #define Tperiod 1000    //Converts s to ms within period calc
@@ -63,11 +63,13 @@ static const int t7_queue_len = 2;
 //Functions for each task
 //Task1 watchdog 30Hz 
 void task1(void *parameter){
+
   while(1){
-    vTaskDelay(t1_period / portTICK_PERIOD_MS);
     digitalWrite(t1_pin, HIGH);  //Sets Output High
-    vTaskDelay(0.05 / portTICK_PERIOD_MS); //Delays signal by 50us   
+    delayMicroseconds(50); //Delays signal by 50us   
     digitalWrite(t1_pin, LOW);//Sets Output Low again
+    vTaskDelay(t1_period / portTICK_PERIOD_MS);
+
   }
 }
 
@@ -79,7 +81,9 @@ void task2(void *parameter){
   int t2_debounce = 0;    //Button debounce
   
   while(1){ 
-    vTaskDelay(t2_period / portTICK_PERIOD_MS);
+       
+    digitalWrite(timer_pin, HIGH);   //High to measure time   
+    
     t2_debounce = t2_state;         //Saves previous status              
     t2_state = digitalRead(t2_pin); //Reads state of button
     vTaskDelay(0.25 / portTICK_PERIOD_MS); //Delays signal by 250us       
@@ -94,6 +98,10 @@ void task2(void *parameter){
      xSemaphoreTake(mutex, portMAX_DELAY);
      t9_Data.t2_switchstate = t2_state;
      xSemaphoreGive(mutex);
+
+     digitalWrite(timer_pin, LOW);    //Low to end measure time  
+
+     vTaskDelay(t2_period / portTICK_PERIOD_MS);
   }
 }
 
@@ -113,20 +121,15 @@ void task3(void *parameter){
 
      xSemaphoreTake(mutex, portMAX_DELAY);
      t9_Data.t3_frequency = t3_frequency; 
-     xSemaphoreGive(mutex);    
+     xSemaphoreGive(mutex);  
   }            
 }
 
 //Task4 Poteniotmeter 24Hz (des.) 25Hz (expt.)
-void task4(void *parameter){
-
- 
-  
+void task4(void *parameter){  
   while(1){
     vTaskDelay(t4_period / portTICK_PERIOD_MS);
-    //digitalWrite(timer_pin, HIGH);   //High to measure time   
     t4_state = analogRead(t4_pin);//Reads analog input  
-    //digitalWrite(timer_pin, LOW);    //Low to end measure time  
   }          
 }
 
@@ -157,12 +160,14 @@ void task5(void *parameter){
    xSemaphoreGive(mutex);
 
    xQueueSend(t5_queue, (void *)&t5_avg, 1);
+        
   }                     
 }
 
 
 //Task6 Volatile 10Hz
 void task6(void *parameter){
+
   while(1){
     vTaskDelay(t6_period / portTICK_PERIOD_MS); 
     //for loop as defined in lab sheet
@@ -224,12 +229,17 @@ void task9(void *parameter){
       Serial.printf("%d, %d, %d \n",  t9_Data.t2_switchstate, t9_Data.t3_frequency, t9_Data.t5_potavg);
       xSemaphoreGive(mutex);
     }
-    
     else{
     }
   }
 }
 
+//With variables 
+  //  UBaseType_t uxHighWaterMark;
+  //  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+//End of while loop
+   // uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+   // Serial.println(uxHighWaterMark);
 
 //************************************************************************************************************************
 void setup() {
@@ -256,7 +266,7 @@ void setup() {
   xTaskCreate(  
               task1,  // Function to be called
               "task1",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -265,16 +275,25 @@ void setup() {
   xTaskCreate( 
               task2,  // Function to be called
               "task2",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
               );                
+
+  xTaskCreate( 
+              task3,  // Function to be called
+              "task3",   // Name of task
+              770,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              NULL,         // Parameter to pass to function
+              2,            // Task priority (0 to configMAX_PRIORITIES - 1)
+              NULL         // Task handle
+              );  
                 
   xTaskCreate(  
               task4,  // Function to be called
               "task4",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              779,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -283,7 +302,7 @@ void setup() {
   xTaskCreate(  
               task5,  // Function to be called
               "task5",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -292,7 +311,7 @@ void setup() {
   xTaskCreate(  
               task6,  // Function to be called
               "task6",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -301,7 +320,7 @@ void setup() {
   xTaskCreate(  
               task7,  // Function to be called
               "task7",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              780,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -310,7 +329,7 @@ void setup() {
   xTaskCreate( 
               task8,  // Function to be called
               "task8",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              820,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
