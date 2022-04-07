@@ -53,11 +53,11 @@ static QueueHandle_t t4_queue;
 static QueueHandle_t t5_queue;
 static const int t5_queue_len = 2; 
 static QueueHandle_t t7_queue;
+static const int t7_queue_len = 2; 
 
 
 //tbm
  int t4_state = 0;       //integer for analogue value read
- int error_code = 0;     //Task 7 Error Code
 
 //********************************************************************************************************************************
 //Functions for each task
@@ -176,6 +176,7 @@ void task6(void *parameter){
 void task7(void *parameter){
 
   int t5_avg_rec;
+  int error_code;
   
   while(1){
     if (xQueueReceive(t5_queue, (void *)&t5_avg_rec, 0) == pdTRUE){
@@ -187,6 +188,8 @@ void task7(void *parameter){
       else{
         error_code = 0;
       }
+
+      xQueueSend(t7_queue, (void *)&error_code, 1);
     }
   }
 }
@@ -194,15 +197,20 @@ void task7(void *parameter){
 
 //Task8 LED 3Hz
 void task8(void *parameter){
+
+  int error_code_rec;
+  
   while(1){
-    vTaskDelay(t8_period / portTICK_PERIOD_MS); 
-    //Reads error code and sets LED high/low if error_code 1/0
-    if(error_code == 1){
-      digitalWrite(t8_pin, HIGH);
-    }
-    else{
-      digitalWrite(t8_pin, LOW);
+    if (xQueueReceive(t7_queue, (void *)&error_code_rec, 0) == pdTRUE){
+      vTaskDelay(t8_period / portTICK_PERIOD_MS); 
+      //Reads error code and sets LED high/low if error_code 1/0
+      if(error_code_rec == 1){
+        digitalWrite(t8_pin, HIGH);
       }
+      else{
+        digitalWrite(t8_pin, LOW);
+      }
+    }
   }
 }
 
@@ -242,6 +250,7 @@ void setup() {
 
   // Create queues
   t5_queue = xQueueCreate(t5_queue_len, sizeof(int));
+  t7_queue = xQueueCreate(t7_queue_len, sizeof(int));
 
   //These tasks are set to run forever
   xTaskCreate(  
@@ -265,7 +274,7 @@ void setup() {
   xTaskCreate(  
               task4,  // Function to be called
               "task4",   // Name of task
-              2048,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -274,7 +283,7 @@ void setup() {
   xTaskCreate(  
               task5,  // Function to be called
               "task5",   // Name of task
-              2048,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
@@ -292,7 +301,7 @@ void setup() {
   xTaskCreate(  
               task7,  // Function to be called
               "task7",   // Name of task
-              2048,         // Stack size (bytes in ESP32, words in FreeRTOS)
+              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
               NULL,         // Parameter to pass to function
               1,            // Task priority (0 to configMAX_PRIORITIES - 1)
               NULL         // Task handle
