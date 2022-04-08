@@ -390,7 +390,7 @@ void setup() {
   xTaskCreate( 
               task9,        //Function to be called (Task 9)
               "task9",      //Task name
-              820,         //Stack size in bytes (ESP32)
+              820,          //Stack size in bytes (ESP32)
               NULL,         //Parameter to pass to function
               1,            //Task priority (1 lowest)
               NULL          //Task handle
