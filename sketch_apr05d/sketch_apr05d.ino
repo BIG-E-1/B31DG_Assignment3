@@ -65,9 +65,6 @@ static QueueHandle_t t7_queue;      //Queue for task 7->8
 static const int t7_queue_len = 1;  //Sets max length of queue to 1
 
 
-//tbm
- int t4_state = 0;       //integer for analogue value read
-
 //********************************************************************************************************************************
 //Functions for each task
 
@@ -146,11 +143,17 @@ void task3(void *parameter){
 
 
 //Task4 Poteniotmeter 24Hz (des.) 25Hz (expt.)
-void task4(void *parameter){  
+void task4(void *parameter){
+  //Declaring variables used within Task 5
+  int t4_state;         //integer for analogue value read  
+    
   //Continuous loop  
   while(1){
     //Reads analog input
     t4_state = analogRead(t4_pin);  
+
+    //Sends pot. avg to queue for task 7
+    xQueueSend(t4_queue, (void *)&t4_state, 1);
     
     //FreeRTOS delay at period of Task 4
     vTaskDelay(t4_period / portTICK_PERIOD_MS);
@@ -165,28 +168,32 @@ void task5(void *parameter){
   int t5_sto2 = 0;        //Task 5 Pre-Calc. Avg Storage 2
   int t5_sto3 = 0;        //Task 5 Pre-Calc. Avg Storage 3
   int t5_sto4 = 0;        //Task 5 Pre-Calc. Avg Storage 4
-  int t5_avg;
+  int t5_avg;             //Task 5 Pot. Avg.
+  int t4_state_rec;           //integer for analogue value read
 
   //Continuous loop  
   while(1){
-    t5_sto4 = t5_sto3;         //Shifts values by one position
-    t5_sto3 = t5_sto2;         //Shifts values by one position         
-    t5_sto2 = t5_sto1;         //Shifts values by one position 
-    t5_sto1 = t4_state;        //Shifts values by one position
+    //Checks if a message in the queue
+    if (xQueueReceive(t4_queue, (void *)&t4_state_rec, 0) == pdTRUE){      
+      t5_sto4 = t5_sto3;         //Shifts values by one position
+      t5_sto3 = t5_sto2;         //Shifts values by one position         
+      t5_sto2 = t5_sto1;         //Shifts values by one position 
+      t5_sto1 = t4_state_rec;        //Shifts values by one position
+    
+      //Uses 4 values to calculate average
+      t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
   
-    //Uses 4 values to calculate average
-    t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
-
-    //Semaphore to protect access to T9 struct
-    xSemaphoreTake(mutex, portMAX_DELAY);
-    t9_Data.t5_potavg = t5_avg;    //Saves pot. avg to struct
-    xSemaphoreGive(mutex);
-
-    //Sends pot. avg to queue for task 7
-    xQueueSend(t5_queue, (void *)&t5_avg, 1);    
-
-    //FreeRTOS delay at period of Task 5
-    vTaskDelay(t5_period / portTICK_PERIOD_MS); 
+      //Semaphore to protect access to T9 struct
+      xSemaphoreTake(mutex, portMAX_DELAY);
+      t9_Data.t5_potavg = t5_avg;    //Saves pot. avg to struct
+      xSemaphoreGive(mutex);
+  
+      //Sends pot. avg to queue for task 7
+      xQueueSend(t5_queue, (void *)&t5_avg, 1);    
+  
+      //FreeRTOS delay at period of Task 5
+      vTaskDelay(t5_period / portTICK_PERIOD_MS); 
+    }
   }                     
 }
 
