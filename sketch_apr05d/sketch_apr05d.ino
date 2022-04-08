@@ -53,7 +53,7 @@ struct task9_Data{
 //Task 9 structure being initiated  
 task9_Data t9_Data;
 
-//Decleration of semaphore called mutex.
+//Decleration of semaphore called mutex
 static SemaphoreHandle_t mutex;
 
 //Decleration of 3 Queues
@@ -251,109 +251,111 @@ void task9(void *parameter){
    // Serial.println(uxHighWaterMark);
 
 //************************************************************************************************************************
-void setup() {
+//Setup and Loop Functions 
 
-  // Configure pin
-  pinMode(t1_pin, OUTPUT);   //Task 1 Watchdog 
-  pinMode(t2_pin, INPUT_PULLDOWN);    //Task 2 Button dig. read
-  pinMode(t3_pin, INPUT);    //Task 3 Square wave in.
-  pinMode(t4_pin, INPUT);    //Task 4 Analogue input
-  pinMode(t8_pin, OUTPUT);   //Task 8 Error LED output
-  pinMode(timer_pin, OUTPUT);//Output for time testing
-  
+void setup() {
   //Creates Serial Port
   Serial.begin(115200);
-
-  //Create mutex
+  
+  // Configure pin
+  pinMode(t1_pin, OUTPUT);            //Task 1 Watchdog 
+  pinMode(t2_pin, INPUT_PULLDOWN);    //Task 2 Button dig. read
+  pinMode(t3_pin, INPUT);             //Task 3 Square wave in.
+  pinMode(t4_pin, INPUT);             //Task 4 Analogue input
+  pinMode(t8_pin, OUTPUT);            //Task 8 Error LED output
+  pinMode(timer_pin, OUTPUT);         //Output for time testing
+  
+  //Creates mutex for 
   mutex = xSemaphoreCreateMutex();
 
-  // Create queues
-  t5_queue = xQueueCreate(t5_queue_len, sizeof(int));
-  t7_queue = xQueueCreate(t7_queue_len, sizeof(int));
+  //Creates 3 queues using prev. declared variables
+  t4_queue = xQueueCreate(t4_queue_len, sizeof(int));   //Task 4 queue
+  t5_queue = xQueueCreate(t5_queue_len, sizeof(int));   //Task 5 queue
+  t7_queue = xQueueCreate(t7_queue_len, sizeof(int));   //Task 7 queue
 
-  //These tasks are set to run forever
+  //Tasks below run forever
   xTaskCreate(  
-              task1,  // Function to be called
-              "task1",   // Name of task
-              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
+              task1,        //Function to be called (Task 1)
+              "task1",      //Task name 
+              768,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
               );     
 
   xTaskCreate( 
-              task2,  // Function to be called
-              "task2",   // Name of task
-              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
+              task2,        //Function to be called (Task 2)
+              "task2",      //Task name
+              768,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
               );                
 
   xTaskCreate( 
-              task3,  // Function to be called
-              "task3",   // Name of task
-              770,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              2,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
+              task3,        //Function to be called (Task 3)
+              "task3",      //Task name
+              770,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              2,            //Task priority (2 - highest in this program)
+              NULL          //Task handle
               );  
                 
   xTaskCreate(  
-              task4,  // Function to be called
-              "task4",   // Name of task
-              779,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
-              );     // Run on one core for demo purposes (ESP32 only)   
+              task4,        //Function to be called (Task 4)
+              "task4",      //Task name
+              779,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
+              );              
           
   xTaskCreate(  
-              task5,  // Function to be called
-              "task5",   // Name of task
-              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
-              );     // Run on one core for demo purposes (ESP32 only)   
+              task5,        //Function to be called (Task 5)
+              "task5",      //Task name
+              768,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
+              );              
 
   xTaskCreate(  
-              task6,  // Function to be called
-              "task6",   // Name of task
-              768,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
-              );     // Run on one core for demo purposes (ESP32 only)   
+              task6,        //Function to be called (Task 6)
+              "task6",      //Task name
+              768,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
+              );               
           
   xTaskCreate(  
-              task7,  // Function to be called
-              "task7",   // Name of task
-              780,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
-              );     // Run on one core for demo purposes (ESP32 only)  
+              task7,        //Function to be called (Task 7)
+              "task7",      //Task name
+              780,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
+              );       
 
   xTaskCreate( 
-              task8,  // Function to be called
-              "task8",   // Name of task
-              820,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
+              task8,        //Function to be called (Task 8)
+              "task8",      //Task name
+              820,          //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
               );                   
 
   xTaskCreate( 
-              task9,  // Function to be called
-              "task9",   // Name of task
-              1024,         // Stack size (bytes in ESP32, words in FreeRTOS)
-              NULL,         // Parameter to pass to function
-              1,            // Task priority (0 to configMAX_PRIORITIES - 1)
-              NULL         // Task handle
+              task9,        //Function to be called (Task 9)
+              "task9",      //Task name
+              1024,         //Stack size in bytes (ESP32)
+              NULL,         //Parameter to pass to function
+              1,            //Task priority (1 lowest)
+              NULL          //Task handle
               );  
 
-  // Delete "setup and loop" task
+  //Deletes "setup and loop" task
   vTaskDelete(NULL);
 }
 
