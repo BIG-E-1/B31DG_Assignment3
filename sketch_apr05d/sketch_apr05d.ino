@@ -70,32 +70,36 @@ static const int t7_queue_len = 1;  //Sets max length of queue to 1
 
 //********************************************************************************************************************************
 //Functions for each task
+
+
 //Task1 watchdog 30Hz 
 void task1(void *parameter){
-
+  //Continuous loop
   while(1){
-    digitalWrite(t1_pin, HIGH);  //Sets Output High
-    delayMicroseconds(50); //Delays signal by 50us   
-    digitalWrite(t1_pin, LOW);//Sets Output Low again
-    vTaskDelay(t1_period / portTICK_PERIOD_MS);
+    digitalWrite(t1_pin, HIGH);   //Sets Output High
+    delayMicroseconds(50);        //Delays signal by 50us   
+    digitalWrite(t1_pin, LOW);    //Sets Output Low again
 
+    //FreeRTOS delay at period of Task 1
+    vTaskDelay(t1_period / portTICK_PERIOD_MS);
   }
 }
 
 
 //Task2 High/Low In 5Hz
 void task2(void *parameter){ 
-
+  //Declaring variables used within Task 2
   int t2_state = 0;       //Button State for Task 2
   int t2_debounce = 0;    //Button debounce
-  
+
+  //Continuous loop
   while(1){ 
-       
+    //Timer pin for T2 execution time
     digitalWrite(timer_pin, HIGH);   //High to measure time   
-    
+
     t2_debounce = t2_state;         //Saves previous status              
     t2_state = digitalRead(t2_pin); //Reads state of button
-    vTaskDelay(0.25 / portTICK_PERIOD_MS); //Delays signal by 250us       
+    vTaskDelay(0.25 / portTICK_PERIOD_MS); //Delays signal by 250us for debouncing     
   
     //Checking for button bouncing
     if(t2_state != digitalRead(t2_pin)){
@@ -103,58 +107,68 @@ void task2(void *parameter){
         t2_state = 0;
       }
     } 
- 
-     xSemaphoreTake(mutex, portMAX_DELAY);
-     t9_Data.t2_switchstate = t2_state;
-     xSemaphoreGive(mutex);
+    //Semaphore to protect access to T9 struct
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    t9_Data.t2_switchstate = t2_state;    //Saves button state to struct
+    xSemaphoreGive(mutex);
 
-     digitalWrite(timer_pin, LOW);    //Low to end measure time  
+    //Timer pin for T2 execution time
+    digitalWrite(timer_pin, LOW);    //Low to end measure time  
 
-     vTaskDelay(t2_period / portTICK_PERIOD_MS);
+    //FreeRTOS delay at period of Task 2
+    vTaskDelay(t2_period / portTICK_PERIOD_MS);
   }
 }
 
 
 //Task3 Freq In 1Hz
 void task3(void *parameter){
-  
-  float t3_duration1low;  //float counter for time of low
-  float t3_durationperiod;//float for period of waveform
-  int t3_frequency;       //integer wavegen frequency
-    
-  while(1){
-     vTaskDelay(t3_period / portTICK_PERIOD_MS);
-     t3_duration1low = pulseIn(t3_pin, LOW);
-     t3_durationperiod = t3_duration1low *2;
-     t3_frequency = (1 / (t3_durationperiod/1000))*1000; 
+  //Declaring variables used within Task 3
+  float t3_duration1low;    //float counter for time of low
+  float t3_durationperiod;  //float for period of waveform
+  int t3_frequency;         //integer wavegen frequency
 
+  //Continuous loop    
+  while(1){
+     t3_duration1low = pulseIn(t3_pin, LOW);    //Reads pin low time
+     t3_durationperiod = t3_duration1low *2;    //Multiplies by 2 to get period
+     t3_frequency = (1 / (t3_durationperiod/1000))*1000; //Converts period to freq.
+
+     //Semaphore to protect access to T9 struct
      xSemaphoreTake(mutex, portMAX_DELAY);
-     t9_Data.t3_frequency = t3_frequency; 
+     t9_Data.t3_frequency = t3_frequency;    //Saves freq. to struct 
      xSemaphoreGive(mutex);  
+
+    //FreeRTOS delay at period of Task 3
+     vTaskDelay(t3_period / portTICK_PERIOD_MS);
   }            
 }
 
+
 //Task4 Poteniotmeter 24Hz (des.) 25Hz (expt.)
 void task4(void *parameter){  
+  //Continuous loop  
   while(1){
+    //Reads analog input
+    t4_state = analogRead(t4_pin);  
+    
+    //FreeRTOS delay at period of Task 4
     vTaskDelay(t4_period / portTICK_PERIOD_MS);
-    t4_state = analogRead(t4_pin);//Reads analog input  
   }          
 }
 
 
 //Task5 Avg 4 Pot. 24Hz (des.) 25Hz (expt.)
 void task5(void *parameter){ 
-
+  //Declaring variables used within Task 5
   int t5_sto1 = 0;        //Task 5 Pre-Calc. Avg Storage 1
   int t5_sto2 = 0;        //Task 5 Pre-Calc. Avg Storage 2
   int t5_sto3 = 0;        //Task 5 Pre-Calc. Avg Storage 3
   int t5_sto4 = 0;        //Task 5 Pre-Calc. Avg Storage 4
   int t5_avg;
-  
-  while(1){
-    vTaskDelay(t5_period / portTICK_PERIOD_MS); 
 
+  //Continuous loop  
+  while(1){
     t5_sto4 = t5_sto3;         //Shifts values by one position
     t5_sto3 = t5_sto2;         //Shifts values by one position         
     t5_sto2 = t5_sto1;         //Shifts values by one position 
@@ -162,39 +176,46 @@ void task5(void *parameter){
   
     //Uses 4 values to calculate average
     t5_avg = (t5_sto4 + t5_sto3 + t5_sto2 + t5_sto1)/4; 
-   // Serial.println(t5_avg);
 
-   xSemaphoreTake(mutex, portMAX_DELAY);
-   t9_Data.t5_potavg = t5_avg;
-   xSemaphoreGive(mutex);
+    //Semaphore to protect access to T9 struct
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    t9_Data.t5_potavg = t5_avg;    //Saves pot. avg to struct
+    xSemaphoreGive(mutex);
 
-   xQueueSend(t5_queue, (void *)&t5_avg, 1);
-        
+    //Sends pot. avg to queue for task 7
+    xQueueSend(t5_queue, (void *)&t5_avg, 1);    
+
+    //FreeRTOS delay at period of Task 5
+    vTaskDelay(t5_period / portTICK_PERIOD_MS); 
   }                     
 }
 
 
 //Task6 Volatile 10Hz
 void task6(void *parameter){
-
+  //Continuous loop
   while(1){
-    vTaskDelay(t6_period / portTICK_PERIOD_MS); 
     //for loop as defined in lab sheet
     for(int C_Loop = 1; C_Loop == 1000; C_Loop++){  
       __asm__ __volatile__("nop");
     }
+
+    //FreeRTOS delay at period of Task 6
+    vTaskDelay(t6_period / portTICK_PERIOD_MS); 
   }
 }
 
+
 //Task7 checker 3Hz
 void task7(void *parameter){
-
+  //Declaring variables used within Task 7
   int t5_avg_rec;
   int error_code;
-  
+
+  //Continuous loop  
   while(1){
-    if (xQueueReceive(t5_queue, (void *)&t5_avg_rec, 0) == pdTRUE){
-      vTaskDelay(t7_period / portTICK_PERIOD_MS); 
+    //Checks if a message in the queue
+    if (xQueueReceive(t5_queue, (void *)&t5_avg_rec, 0) == pdTRUE){      
       //if statment as defined in lab sheet
       if(t5_avg_rec > (4096/2)){
         error_code = 1; 
@@ -202,8 +223,11 @@ void task7(void *parameter){
       else{
         error_code = 0;
       }
-
+      //Sends error code to queue for task 8
       xQueueSend(t7_queue, (void *)&error_code, 1);
+
+      //FreeRTOS delay at period of Task 7
+      vTaskDelay(t7_period / portTICK_PERIOD_MS); 
     }
   }
 }
@@ -211,12 +235,13 @@ void task7(void *parameter){
 
 //Task8 LED 3Hz
 void task8(void *parameter){
-
+  //Declaring variables used within Task 8
   int error_code_rec;
-  
+
+  //Continuous loop  
   while(1){
+    //Checks if a message in the queue
     if (xQueueReceive(t7_queue, (void *)&error_code_rec, 0) == pdTRUE){
-      vTaskDelay(t8_period / portTICK_PERIOD_MS); 
       //Reads error code and sets LED high/low if error_code 1/0
       if(error_code_rec == 1){
         digitalWrite(t8_pin, HIGH);
@@ -224,25 +249,34 @@ void task8(void *parameter){
       else{
         digitalWrite(t8_pin, LOW);
       }
+      //FreeRTOS delay at period of Task 8
+      vTaskDelay(t8_period / portTICK_PERIOD_MS);
     }
   }
 }
+
 
 //Task9 Print Resuts
 void task9(void *parameter){
+  //Continuous loop  
   while(1){
-    vTaskDelay(t9_period / portTICK_PERIOD_MS); 
-   if(t9_Data.t2_switchstate){
+    //Req.10 button pushed for output of code
+    if(t9_Data.t2_switchstate){    
+      //Semaphore to protect access to T9 struct
       xSemaphoreTake(mutex, portMAX_DELAY);
+      
       //Prints in serial a csv as defined in lab sheet
       Serial.printf("%d, %d, %d \n",  t9_Data.t2_switchstate, t9_Data.t3_frequency, t9_Data.t5_potavg);
       xSemaphoreGive(mutex);
-    }
-    else{
-    }
+     }
+     else{
+   }
+   //FreeRTOS delay at period of Task 9
+   vTaskDelay(t9_period / portTICK_PERIOD_MS); 
   }
 }
 
+//Code below is used to measure stack size of tasks. Commented out as not used.
 //With variables 
   //  UBaseType_t uxHighWaterMark;
   //  uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
