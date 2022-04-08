@@ -1,16 +1,24 @@
 
 //B31DG Assignment 3
 //Ethan Thomas Hunking H00272332
+//The code below satisfies the same requirements of assignment 2 (implementation
+//of 9 different tasks) in addition to an additional requirement 10. 
+//The program uses FreeRTOS to implement each task at the different desired  
+//frequency. It uses a queue, struct and a FreeRTOS semaphore
+//The report attached to this code, explains this functionality. 
+
+//************************************************************************************8
+//Declaring pins, constants, structures, queues and semaphores
 
 //Project Pins
-#define timer_pin 32    //Pin allocation for timer output
+#define timer_pin 32    //Pin allocation for Timer output (Task 2 Execution)
 #define t1_pin 21       //Pin allocation for Task 1
 #define t2_pin 22       //Pin allocation for Task 2
 #define t3_pin 13       //Pin allocation for Task 3
 #define t4_pin 14       //Pin allocation for Task 4
 #define t8_pin 15       //Pin allocation for Task 8
 
-//Frequency of Tasks
+//Frequency of Tasks (Hz) - Allows for modular code
 #define t1_freq 30.67
 #define t2_freq 24
 #define t3_freq 1
@@ -19,12 +27,12 @@
 #define t6_freq 10
 #define t7_freq 3
 #define t8_freq 3
-#define t9_freq 1 //0.2
+#define t9_freq 0.2 
 
-//Time Period Calculator
-#define Tperiod 1000    //Converts s to ms within period calc
+//Time Period Calculator - Allows for modular code
+#define Tperiod 1000    //Converts s to ms within period calculation 
 
-//Period of Task in ms
+//Calculates period of task in ms using frequency 
 double t1_period = Tperiod/t1_freq;
 double t2_period = Tperiod/t2_freq;
 double t3_period = Tperiod/t3_freq;
@@ -35,25 +43,26 @@ double t7_period = Tperiod/t7_freq;
 double t8_period = Tperiod/t8_freq;
 double t9_period = Tperiod/t9_freq;
 
-//Creating structure for task 9 information 
+//Creates a structure for task 9 data 
 struct task9_Data{
-  int t2_switchstate;
-  int t3_frequency;
-  int t5_potavg;
+  int t2_switchstate;   //Recording Task 2 Switch Status
+  int t3_frequency;     //Recording Task 3 Frequency
+  int t5_potavg;        //Recording Task 5 Potentiometer Average
 };
 
-//Structure being intiated  
+//Task 9 structure being initiated  
 task9_Data t9_Data;
 
-//Delcleation of semaphore called mutex.
+//Decleration of semaphore called mutex.
 static SemaphoreHandle_t mutex;
 
-//Queues
-static QueueHandle_t t4_queue;
-static QueueHandle_t t5_queue;
-static const int t5_queue_len = 2; 
-static QueueHandle_t t7_queue;
-static const int t7_queue_len = 2; 
+//Decleration of 3 Queues
+static QueueHandle_t t4_queue;      //Queue for task 4->5
+static const int t4_queue_len = 2;  //Sets max length of queue to 2
+static QueueHandle_t t5_queue;      //Queue for task 5->7
+static const int t5_queue_len = 1;  //Sets max length of queue to 1 
+static QueueHandle_t t7_queue;      //Queue for task 7->8
+static const int t7_queue_len = 1;  //Sets max length of queue to 1
 
 
 //tbm
